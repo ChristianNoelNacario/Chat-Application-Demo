@@ -1,0 +1,25 @@
+{
+  "name": "chatapplication---demo",
+  "version": "1.0.0",
+  "description": "demo for application",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChristianNoelNacario/Chat-Application-Demo.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChristianNoelNacario/Chat-Application-Demo/issues"
+  },
+  "homepage": "https://github.com/ChristianNoelNacario/Chat-Application-Demo#readme",
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
