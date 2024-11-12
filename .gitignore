@@ -1,0 +1,8 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment and runtime files
+.env
+*.log
+npm-debug.log*
