@@ -45,9 +45,141 @@
   </nav>
   <h1 style="text-align: center;">Welcome to the Chat Application</h1>
   <h2 style="text-align: center;">This is the SMS Page</h2>
+  <div class="container mt-5">
+    <h1 class="text-center mb-4">SMS Messages</h1>
+    
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        <form id="sms-form">
+          <div class="mb-3">
+            <label class="form-label">To (Phone Number)</label>
+            <input type="tel" class="form-control" id="recipient" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Message</label>
+            <textarea class="form-control" id="message" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Attachment</label>
+            <input type="file" class="form-control" id="attachment" accept="image/*">
+          </div>
+          <button type="submit" id="send-btn" class="btn btn-primary">Send SMS</button>
+        </form>
 
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3>Message History</h3>
+          <button id="refreshHistory" class="btn btn-secondary">
+            <i class="fas fa-sync"></i> Refresh
+          </button>
+        </div>
+        <div id="sms-history"></div>
+      </div>
+    </div>
+  </div>
   <script>
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
+
+    function setRefreshLoading(isLoading) {
+      const button = document.getElementById('refreshHistory');
+      if (isLoading) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+      } else {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-sync"></i> Refresh';
+      }
+    }
+
+    document.querySelector('#sms-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const sendBtn = document.querySelector('#send-btn');
+    const recipient = document.querySelector('#recipient').value;
+    const message = document.querySelector('#message').value;
+    const file = document.querySelector('#attachment').files[0];
+
+    try {
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = 'Sending...';
+
+      let mediaUrl;
+      if (file) {
+      console.log('Uploading file:', file); // Debug log
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const uploadResponse = await fetch('/upload-media', {
+        method: 'POST',
+        body: formData // Don't set Content-Type - browser sets it with boundary
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload file');
+      }
+
+      const uploadResult = await uploadResponse.json();
+      console.log('Upload result:', uploadResult); // Debug log
+      mediaUrl = uploadResult.url;
+    }
+    
+
+      const response = await fetch('/send-sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          recipient, 
+          message,
+          mediaUrl 
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert('Message sent successfully');
+        document.querySelector('#sms-form').reset();
+        loadSMSHistory();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert(error.message);
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = 'Send SMS';
+    }
+  });
+
+
+      async function loadSMSHistory() {
+      try {
+        setRefreshLoading(true);
+        const response = await fetch('/sms-history');
+        const messages = await response.json();
+        
+        const historyDiv = document.querySelector('#sms-history');
+        historyDiv.innerHTML = messages.map(msg => `
+          <div class="card mb-2">
+            <div class="card-body">
+              <h6>${msg.to}</h6>
+              <p>${msg.body}</p>
+              ${msg.mediaUrl ? `<img src="${msg.mediaUrl}" class="img-fluid mb-2" alt="Attachment">` : ''}
+              <small>${new Date(msg.dateCreated).toLocaleString()}</small>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to load message history');
+      } finally {
+        setRefreshLoading(false);
+      }
+    }
+
+    document.querySelector('#refreshHistory').addEventListener('click', loadSMSHistory);
+
+    document.addEventListener('DOMContentLoaded', loadSMSHistory);
+
+    document.querySelector('#logoutBtn').addEventListener('click', async () => {
         try {
             const response = await fetch('/logout', {
                 method: 'POST',

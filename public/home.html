@@ -48,7 +48,7 @@
   <h2 style="text-align: center;">This is the Home Page</h2>
 
   <script>
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
+    document.querySelector('#logoutBtn').addEventListener('click', async () => {
         try {
             const response = await fetch('/logout', {
                 method: 'POST',

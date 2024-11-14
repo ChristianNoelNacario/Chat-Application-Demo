@@ -17,18 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('Socket connected');
 
-    // let username; // Declare the username variable
-    // let connectionId;
-    
-
-    // socket.on('username', (data) => {
-    //     username = data; // Store the username when received
-    // });
-
-    // socket.on('connectionId', (data) => {
-    //     connectionId = data; // Store the connectionId when received
-    // });
-
     document.querySelector('form').addEventListener('submit', (e) => {
         e.preventDefault();
         const messageInput = document.querySelector('#message');

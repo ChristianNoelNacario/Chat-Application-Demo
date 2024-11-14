@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
+    <script src="https://sdk.twilio.com/js/client/v1.14/twilio.min.js"></script>
 </head>
 <body>
   <nav class="navbar navbar-expand-lg bg-body-tertiary">
@@ -47,8 +48,241 @@
   <h1 style="text-align: center;">Welcome to the Chat Application</h1>
   <h2 style="text-align: center;">This is the Voice Page</h2>
 
+  <div class="container mt-4">
+    <div class="card">
+      <div class="card-header">
+        <h3>Make a Call</h3>
+      </div>
+      <div class="card-body">
+        <form id="call-form">
+          <div class="form-group mb-3">
+            <label for="call-recipient">Phone Number:</label>
+            <input type="tel" class="form-control" id="call-recipient" 
+                   placeholder="+1234567890" required>
+          </div>
+          <button type="submit" class="btn btn-primary" id="callBtn">
+            Make Call
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div id="call-controls" style="display: none" class="card mt-3">
+      <div class="card-body">
+        <div id="call-status" class="mb-3"></div>
+        <button id="button-accept" class="btn btn-success me-2">Accept</button>
+        <button id="button-reject" class="btn btn-danger me-2">Reject</button>
+        <button id="button-hangup" class="btn btn-warning" style="display: none">Hangup</button>
+      </div>
+    </div>
+  
+    <!-- Call History Card -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h3>Call History</h3>
+        <button class="btn btn-secondary btn-sm float-end" id="refreshCallsBtn">
+          Refresh
+        </button>
+      </div>
+      <div class="card-body">
+        <div id="call-history"></div>
+      </div>
+    </div>
+  </div>
   <script>
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
+
+    let device;
+    let currentConnection;
+
+    async function setupDevice() {
+
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+        const response = await fetch('/voice-token', { method: 'POST' });
+        const data = await response.json();
+        device = new Twilio.Device(data.token, { 
+          codecPreferences: ["opus", "pcmu"], // Recommended codecs
+          fakeLocalAudio: false, 
+        });
+
+        // Ready to make calls
+        device.on('ready', () => {
+          console.log('Twilio.Device is ready for calls');
+          document.getElementById('call-controls').style.display = 'block';
+          document.getElementById('call-status').textContent = 'Ready for calls';
+        });
+
+        device.on('error', error => {
+          console.error('Twilio.Device error:', error);
+          document.getElementById('call-status').textContent = 'Error: ' + error.message;
+        });
+
+        device.on('connect', connection => {
+          console.log('Call connected');
+          document.getElementById('call-status').textContent = 'In call';
+          document.getElementById('button-hangup').style.display = 'inline-block';
+          document.getElementById('button-accept').style.display = 'none';
+          document.getElementById('button-reject').style.display = 'none';
+        });
+
+        device.on('disconnect', () => {
+          console.log('Call ended');
+          document.getElementById('call-status').textContent = 'Call ended';
+          document.getElementById('button-hangup').style.display = 'none';
+          document.getElementById('button-accept').style.display = 'none';
+          document.getElementById('button-reject').style.display = 'none';
+        });
+
+        device.on('incoming', connection => {
+          handleIncomingCall(connection);
+          console.log('Incoming call');
+          document.getElementById('call-status').textContent = 'Incoming call...';
+          document.getElementById('button-accept').style.display = 'inline-block';
+          document.getElementById('button-reject').style.display = 'inline-block';
+          document.getElementById('button-hangup').style.display = 'none';
+        });
+      }
+
+      setupDevice();
+
+      function handleIncomingCall(connection) {
+        currentConnection = connection;
+
+        console.log('current connection:' , currentConnection);
+        
+        document.getElementById('call-status').textContent = 'Incoming call...';
+        document.getElementById('button-accept').style.display = 'inline-block';
+        document.getElementById('button-reject').style.display = 'inline-block';
+        
+        // Setup button handlers
+        document.getElementById('button-accept').addEventListener('click', () => {
+          console.log('Accepting call...');
+          connection.accept();
+        });
+        
+        document.getElementById('button-reject').addEventListener('click', () => {
+          console.log('Rejecting call...');
+          connection.reject();
+        });
+
+        document.getElementById('button-hangup').addEventListener('click', () => {
+          console.log('Hanging up...');
+          connection.disconnect();
+        });
+
+        // Connection event handlers
+        connection.on('accept', () => {
+          console.log('Call accepted');
+          document.getElementById('button-accept').style.display = 'none';
+          document.getElementById('button-reject').style.display = 'none';
+          document.getElementById('button-hangup').style.display = 'inline-block';
+          document.getElementById('call-status').textContent = 'In call';
+        });
+
+        connection.on('disconnect', () => {
+          console.log('Call disconnected');
+          cleanup();
+        });
+
+        connection.on('reject', () => {
+          console.log('Call rejected');
+          cleanup();
+        });
+      }
+
+      function cleanup() {
+        document.getElementById('call-status').textContent = 'Call ended';
+        document.getElementById('button-hangup').style.display = 'none';
+        document.getElementById('button-accept').style.display = 'none';
+        document.getElementById('button-reject').style.display = 'none';
+        currentConnection = null;
+      }
+
+      // Add device incoming call handler
+      
+// Make outbound call
+    async function makeCall(phoneNumber) {
+      
+      if (!phoneNumber) {
+        alert('Please enter a phone number');
+        return;
+      }
+
+      try {
+          console.log('Making call to:', phoneNumber);
+          document.getElementById('call-status').textContent = 'Initiating call...';
+          
+          currentConnection = await device.connect({
+          params: {
+            To: phoneNumber,
+          }
+          });
+
+          const response = await fetch('/make-call', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            recipient: phoneNumber
+          })
+        });
+
+        
+
+        document.getElementById('call-status').textContent = 'Calling...';
+        document.getElementById('button-hangup').style.display = 'inline-block';
+
+        // Handle call states
+        currentConnection.on('accept', () => {
+          document.getElementById('call-status').textContent = 'Call connected';
+        });
+
+        currentConnection.on('disconnect', () => {
+          document.getElementById('call-status').textContent = 'Call ended';
+          document.getElementById('button-hangup').style.display = 'none';
+          currentConnection = null;
+        });
+
+      } catch (error) {
+        console.error('Error making call:', error);
+        document.getElementById('call-status').textContent = 'Call failed: ' + error.message;
+        document.getElementById('button-hangup').style.display = 'none';
+      }
+    }
+
+    
+    document.querySelector('#callBtn').addEventListener('click', async (event) => {
+    event.preventDefault(); 
+    const phoneNumber = document.querySelector('#call-recipient').value;
+    await makeCall(phoneNumber);
+  });
+
+    async function loadCallHistory() {
+      try {
+        const response = await fetch('/call-history');
+        const calls = await response.json();
+        
+        const historyDiv = document.querySelector('#call-history');
+        historyDiv.innerHTML = calls.map(call => `
+          <div class="card mb-2">
+            <div class="card-body">
+              <p>To: ${call.to}</p>
+              <p>From: ${call.from}</p>
+              <p>Status: ${call.status}</p>
+              <p>Duration: ${call.duration} seconds</p>
+              <p>Date: ${new Date(call.dateCreated).toLocaleString()}</p>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading call history:', error);
+      }
+    }
+
+    document.querySelector('#refreshCallsBtn').addEventListener('click', loadCallHistory);
+    loadCallHistory();
+
+    document.querySelector('#logoutBtn').addEventListener('click', async () => {
         try {
             const response = await fetch('/logout', {
                 method: 'POST',
