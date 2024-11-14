@@ -111,45 +111,11 @@ io.use((socket, next) => {
     });
 });
 
-// io.use((socket, next) => {
-//     const username = socket.handshake.auth.username;
-//     if (!username) {
-//         return next(new Error('Invalid username'));
-//     }
-    
-//     // Get user data from database
-//     pool.execute('SELECT * FROM users WHERE username = ?', [username])
-//         .then(([rows]) => {
-//             if (rows.length === 0) {
-//                 return next(new Error('User not found'));
-//             }
-//             socket.username = username;
-//             socket.userId = rows[0].id;
-//             next();
-//         })
-//         .catch(err => next(err));
-// });
-
-let userCount = 0;
 
 io.on('connection', socket => { 
-    // userCount++;
-    // socket.userName = `Guest ${userCount}`;
-    // const userId = socket.request.session.userId;
-    // const username = socket.request.session.username;
-    // const connectionId = socket.id;
+
     const { username, connectionId } = socket.handshake.auth;
 
-    // console.log('User connected:', { userId, username, connectionId });
-    
-    // if (!userId || !username) {
-    //     // If session data is not available, disconnect the socket
-    //     socket.disconnect();
-    //     return;
-    //   }
-
-    // socket.emit('username', username);
-    // socket.emit('connectionId', connectionId);
 
     // Store connection info
     activeConnections.set(connectionId, {
@@ -172,12 +138,6 @@ io.on('connection', socket => {
     });
 
     socket.on('disconnect', () => {
-        // userCount--;
-        // io.emit('chat message', {
-        //     user: 'System',
-        //     message: `${socket.userName} has left the chat`
-        // });
-        // console.log(`${socket.userName} has disconnected`);
         const connection = Array.from(activeConnections.entries())
             .find(([_, value]) => value.socketId === socket.id);
             
