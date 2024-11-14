@@ -36,6 +36,9 @@
           <li class="nav-item">
             <a class="nav-link" href="sms.html">SMS</a>
           </li>
+          <li class="nav-item">
+            <button id="logoutBtn" class="nav-link btn btn-link">Logout</button>
+          </li>
         </ul>
       </div>
     </div>
@@ -43,5 +46,24 @@
 
   <h1 style="text-align: center;">Welcome to the Chat Application</h1>
   <h2 style="text-align: center;">This is the Video Page</h2>
+
+  <script>
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+    
+            if (response.ok) {
+                window.location.href = '/login.html';
+            }
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    });
+    </script>
 </body>
 </html>

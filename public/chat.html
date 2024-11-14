@@ -86,6 +86,9 @@
               <li class="nav-item">
                 <a class="nav-link" href="sms.html">SMS</a>
               </li>
+              <li class="nav-item">
+                <button id="logoutBtn" class="nav-link btn btn-link">Logout</button>
+              </li>
             </ul>
           </div>
         </div>
@@ -106,5 +109,23 @@
     </form>
     </div>
 
+    <script>
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+          try {
+              const response = await fetch('/logout', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  }
+              });
+      
+              if (response.ok) {
+                  window.location.href = '/login.html';
+              }
+          } catch (error) {
+              console.error('Logout failed:', error);
+          }
+      });
+      </script>
 </body>
 </html>

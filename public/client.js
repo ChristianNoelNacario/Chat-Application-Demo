@@ -1,22 +1,48 @@
-document.addEventListener('DOMContentLoaded', function() {
-
+document.addEventListener('DOMContentLoaded', () => {
     // connecting to the server using socket io
-    const socket = io();
-    // boolean for checking if user is typing
-    let typing = false;
+    const username = localStorage.getItem('username');
+    const connectionId = localStorage.getItem('connectionId');
 
-    function stopTyping() {
-        socket.emit('stop typing');
+    if (!username || !connectionId) {
+        window.location.href = '/login.html';
+        return;
     }
 
-    document.querySelector('form').addEventListener('submit', (e) => {
-        //When a user has submitted their message, emit these two messages
-        stopTyping();
-        socket.emit('chat message', document.querySelector('#message').value);
+    const socket = io({
+        auth: { 
+            username,
+            connectionId
+        }
+    });
+
+    console.log('Socket connected');
+
+    // let username; // Declare the username variable
+    // let connectionId;
     
-        document.querySelector('#message').value = '';
+
+    // socket.on('username', (data) => {
+    //     username = data; // Store the username when received
+    // });
+
+    // socket.on('connectionId', (data) => {
+    //     connectionId = data; // Store the connectionId when received
+    // });
+
+    document.querySelector('form').addEventListener('submit', (e) => {
         e.preventDefault();
-        // if the user is currently typing, set it to true and emit a stop typing message
+        const messageInput = document.querySelector('#message');
+        const message = messageInput.value.trim();
+        
+        if (message) {
+            socket.emit('chat message', {
+                message,
+                username,
+                connectionId
+            });
+            messageInput.value = '';
+        }
+        return false;
     });
 
     document.querySelector('#message').addEventListener('keypress', () => {
@@ -40,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // create a strong element to hold the username
         const userName = document.createElement('strong');
-        userName.textContent = data.user + ': ';
+        userName.textContent = data.username + ': ';
 
         // make a node for the value of the message
         const messageContent = document.createTextNode(data.message);
@@ -73,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     type: file.type,
                     data: e.target.result,
                     message: message,
+                    username: username,
                 });
             };
             reader.readAsDataURL(file);
@@ -87,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // create a strong element to hold the username
         const userName = document.createElement('strong');
-        userName.textContent = data.user + ': ';
+        userName.textContent = data.username + ': ';
         messages.appendChild(userName);
 
         const messageText = document.createElement('span');

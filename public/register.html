@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
+    <style>
+        #register-form{
+            width: 50%;
+            margin: 0 auto;
+            margin-top: 10%;
+        }
+
+        h1{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1> Registration Page</h1>
+
+    <form id="register-form">
+        <div class="form-group">
+          <label for="inputEmail">Email address</label>
+          <input type="email" class="form-control" id="inputEmail" aria-describedby="emailHelp" placeholder="Enter email">
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="inputUserName">User Name</label>
+            <input type="text" class="form-control" id="inputUserName" aria-describedby="emailHelp" placeholder="Enter username">
+          </div>
+          <br>
+        <div class="form-group">
+          <label for="inputPassword">Password</label>
+          <input type="password" class="form-control" id="inputPassword" placeholder="Password">
+        </div>
+        <br>
+
+        <button type="submit" class="btn btn-primary">Register User</button>
+    </form>
+
+    <script>
+        document.querySelector('#register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                email: document.querySelector('#inputEmail').value,
+                username: document.querySelector('#inputUserName').value,
+                password: document.querySelector('#inputPassword').value
+            }
+
+            try {
+                const res = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+
+                const result = await res.json();
+
+                if (res.ok){
+                    window.location.href = '/login.html';
+                } else {
+                    alert(res.error || 'registration failed');
+                }
+            }
+            catch(e){
+                alert('registration failed');
+            }
+        });
+    </script>
+</body>
+</html>
